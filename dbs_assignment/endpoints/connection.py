@@ -6,14 +6,29 @@ from sqlalchemy import insert, select, update, delete
 from sqlalchemy.exc import IntegrityError
 
 from pydantic import ValidationError
-from sqlalchemy.orm import Session
-
+from sqlalchemy.orm import Session, joinedload
 from dbs_assignment import schemas
+
 from dbs_assignment.config import engine
 from dbs_assignment.models import Author, Category, Publication
 from dbs_assignment.schemas import PublicationOut, AuthorSchema, CategorySchema
 from typing import Any
 import uuid
+from contextlib import contextmanager
+
+
+@contextmanager
+def session_scope():
+    session = Session(engine)
+    try:
+        yield session
+        session.commit()
+    except:
+        session.rollback()
+        raise
+    finally:
+        session.close()
+
 
 router = APIRouter()
 
@@ -21,7 +36,7 @@ router = APIRouter()
 @router.post("/publications", response_model=PublicationOut)
 def create_publication(payload: dict = Body(...)):
     try:
-        publication = schemas.PublicationCreate(**payload)
+        publication = schemas.PublicationSchema(**payload)
     except ValidationError:
         raise HTTPException(status_code=400)
     with Session(engine) as session:
@@ -65,6 +80,76 @@ def create_publication(payload: dict = Body(...)):
             updatedAt=new_publication.updatedAt
         )
     return response
+
+
+@router.get("/publications/{publication_id}", response_model=PublicationOut)
+def get_publication(publication_id: str):
+    with Session(engine) as session:
+        result = (
+            session.query(Publication)
+            .options(joinedload(Publication.authors), joinedload(Publication.categories))
+            .filter(Publication.id == publication_id)
+            .one_or_none()
+        )
+
+        if not result:
+            raise HTTPException(status_code=404)
+    return result
+
+
+@router.patch("/publications/{publication_id}", response_model=PublicationOut)
+def update_publication(publication_id: str, payload: dict = Body(...)):
+    try:
+        payload_schema = schemas.PublicationSchema(**payload)
+    except ValidationError:
+        raise HTTPException(status_code=400)
+    with session_scope() as session:
+        publication = session.query(Publication).filter(Publication.id == publication_id).one_or_none()
+        if not publication:
+            raise HTTPException(status_code=404)
+
+        authors = [
+            session.query(Author).filter_by(name=author_data.name, surname=author_data.surname).one_or_none()
+            for author_data in payload_schema.authors
+        ]
+        if None in authors:
+            raise HTTPException(status_code=400)
+        publication.authors = authors
+
+        categories = [
+            session.query(Category).filter_by(name=category_name).one_or_none()
+            for category_name in payload_schema.categories
+        ]
+        if None in categories:
+            raise HTTPException(status_code=400)
+        publication.categories = categories
+
+        session.refresh(publication)
+
+        # Create the response object using the PublicationOut schema
+        response = PublicationOut(
+            id=publication.id,
+            title=publication.title,
+            authors=[AuthorSchema(name=author.name, surname=author.surname) for author in
+                     publication.authors],
+            categories=[CategorySchema(name=category.name) for category in publication.categories],
+            createdAt=publication.createdAt,
+            updatedAt=publication.updatedAt
+        )
+
+    return response
+
+
+@router.delete("/publications/{publication_id}", status_code=204)
+def delete_publication(publication_id: str):
+    with session_scope() as session:
+        publication = session.query(Publication).filter(Publication.id == publication_id).one_or_none()
+        if not publication:
+            raise HTTPException(status_code=404)
+
+        session.delete(publication)
+        session.commit()
+    return None
 
 
 def sql_execution(fetching, deleteFlag=False):
@@ -116,8 +201,7 @@ def create_author(payload: dict = Body(...)) -> Any:
 
 @router.get("/authors/{author_id}", status_code=200)
 def get_author(author_id: str):
-    fetching = select(Author).where(Author.id == author_id)
-    record = sql_execution(fetching)
+    record = sql_execution(select(Author).where(Author.id == author_id))
     if not record:
         raise HTTPException(status_code=404)
 

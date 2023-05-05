@@ -5,13 +5,16 @@ from sqlalchemy import Table, ForeignKey
 from sqlalchemy.orm import relationship
 
 publication_authors = Table('publication_authors', Base.metadata,
-                            Column('publication_id', UUID, ForeignKey('Publication.id'), primary_key=True),
-                            Column('author_id', UUID, ForeignKey('Authors.id'), primary_key=True)
+                            Column('publication_id', UUID, ForeignKey('Publication.id', ondelete='CASCADE'),
+                                   primary_key=True),
+                            Column('author_id', UUID, ForeignKey('Authors.id', ondelete='CASCADE'), primary_key=True)
                             )
 
 publication_categories = Table('publication_categories', Base.metadata,
-                               Column('publication_id', UUID, ForeignKey('Publication.id'), primary_key=True),
-                               Column('category_id', UUID, ForeignKey('Category.id'), primary_key=True)
+                               Column('publication_id', UUID, ForeignKey('Publication.id', ondelete='CASCADE'),
+                                      primary_key=True),
+                               Column('category_id', UUID, ForeignKey('Category.id', ondelete='CASCADE'),
+                                      primary_key=True)
                                )
 
 

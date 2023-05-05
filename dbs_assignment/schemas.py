@@ -36,7 +36,7 @@ class AuthorCreate(BaseModel):
     surname: str
 
 
-class PublicationCreate(BaseModel):
+class PublicationSchema(BaseModel):
     id: UUID = Field(default_factory=uuid4)
     title: str
     authors: List[AuthorCreate]
