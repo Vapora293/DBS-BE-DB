@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from uuid import UUID, uuid4
-from typing import Optional
+from typing import Optional, List
 
 
 class AuthorSchema(BaseModel):
@@ -29,8 +29,23 @@ class CategoryUpdateSchema(BaseModel):
     name: Optional[str] = None
 
 
-class Publication(BaseModel):
-    id: str | None = None
+class AuthorCreate(BaseModel):
+    name: str
+    surname: str
+
+
+class PublicationCreate(BaseModel):
+    id: UUID = Field(default_factory=uuid4)
     title: str
-    authors: list[AuthorSchema]
-    categories: list[str]
+    authors: List[AuthorCreate]
+    categories: List[str]
+
+
+class PublicationOut(BaseModel):
+    id: UUID
+    title: str
+    authors: List[AuthorSchema]
+    categories: List[CategorySchema]
+
+    class Config:
+        orm_mode = True

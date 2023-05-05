@@ -16,7 +16,7 @@ config.set_main_option('sqlalchemy.url', 'postgresql+psycopg2://' + env("DATABAS
     "DATABASE_HOST") + ":" + env("DATABASE_PORT") + '/' + env("DATABASE_NAME"))
 
 from dbs_assignment.config import Base, env
-from dbs_assignment.models import Author, BaseModel, Category
+from dbs_assignment.models import Author, Category, Publication
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
 if config.config_file_name is not None:

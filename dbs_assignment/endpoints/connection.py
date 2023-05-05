@@ -6,19 +6,63 @@ from sqlalchemy import insert, select, update, delete
 from sqlalchemy.exc import IntegrityError
 
 from pydantic import ValidationError
+from sqlalchemy.orm import Session
 
 from dbs_assignment import schemas
 from dbs_assignment.config import engine
-from dbs_assignment.models import Author, Category
+from dbs_assignment.models import Author, Category, Publication
+from dbs_assignment.schemas import PublicationOut, PublicationCreate, AuthorSchema, CategorySchema
 from typing import Any
 import uuid
 
 router = APIRouter()
 
 
-@router.post("/publications")
-async def create_publication(payload: schemas.Publication):
-    return payload
+@router.post("/publications", response_model=PublicationOut)
+def create_publication(payload: dict = Body(...)):
+    try:
+        publication = schemas.PublicationCreate(**payload)
+    except ValidationError:
+        raise HTTPException(status_code=400)
+    with Session(engine) as session:
+        # Get authors
+        authors = [
+            session.query(Author).filter_by(name=author_data.name, surname=author_data.surname).one_or_none()
+            for author_data in publication.authors
+        ]
+        if None in authors:
+            raise HTTPException(status_code=400)
+
+        # Get categories
+        categories = [
+            session.query(Category).filter_by(name=category_name).one_or_none()
+            for category_name in publication.categories
+        ]
+        if None in categories:
+            raise HTTPException(status_code=400)
+
+        # Create publication
+        new_publication = Publication(id=publication.id, title=publication.title, authors=authors,
+                                      categories=categories)
+        try:
+            session.add(new_publication)
+            session.commit()
+            session.refresh(new_publication)
+        except IntegrityError as e:
+            session.rollback()
+            if "duplicate key value violates unique constraint" in str(e):
+                raise HTTPException(status_code=409)
+            else:
+                raise HTTPException(status_code=400)
+        # Create the response object using the PublicationOut schema
+        response = PublicationOut(
+            id=new_publication.id,
+            title=new_publication.title,
+            authors=[AuthorSchema(id=author.id, name=author.name, surname=author.surname) for author in
+                     new_publication.authors],
+            categories=[CategorySchema(id=category.id, name=category.name) for category in new_publication.categories]
+        )
+    return response
 
 
 def sql_execution(fetching, deleteFlag=False):

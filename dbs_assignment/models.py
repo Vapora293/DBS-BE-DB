@@ -1,12 +1,18 @@
 from sqlalchemy import Column, TIMESTAMP, func, VARCHAR, UUID
 from dbs_assignment.config import engine, Base
 
+from sqlalchemy import Table, ForeignKey
+from sqlalchemy.orm import relationship
 
-class BaseModel(Base):
-    __tablename__ = 'Base'
-    id = Column(VARCHAR, primary_key=True)
-    createdAt = Column(TIMESTAMP(timezone=True), server_default=func.now())
-    updatedAt = Column(TIMESTAMP(timezone=True), server_default=func.now())
+publication_authors = Table('publication_authors', Base.metadata,
+                            Column('publication_id', UUID, ForeignKey('Publication.id'), primary_key=True),
+                            Column('author_id', UUID, ForeignKey('Authors.id'), primary_key=True)
+                            )
+
+publication_categories = Table('publication_categories', Base.metadata,
+                               Column('publication_id', UUID, ForeignKey('Publication.id'), primary_key=True),
+                               Column('category_id', UUID, ForeignKey('Category.id'), primary_key=True)
+                               )
 
 
 class Author(Base):
@@ -19,32 +25,21 @@ class Author(Base):
 
 
 class Category(Base):
-    __tablename__= 'Category'
+    __tablename__ = 'Category'
     id = Column(UUID, primary_key=True)
     name = Column(VARCHAR)
     createdAt = Column(TIMESTAMP(timezone=True), server_default=func.now(), nullable=False)
     updatedAt = Column(TIMESTAMP(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
-Base.metadata.create_all(engine)
 
-# class Category(BaseModel):
-#     id = models.UUIDField(
-#         primary_key=True,
-#         default=uuid.uuid4,
-#         editable=False
-#     )
-#     name = models.CharField(max_length=255)
-#
-#
-# class Publication(BaseModel):
-#     id = models.UUIDField(
-#         primary_key=True,
-#         default=uuid.uuid4,
-#         editable=False
-#     )
-#     title = models.CharField(max_length=255)
-#     authors = models.ManyToManyField(Author, db_table='author_publication')
-#     categories = models.ManyToManyField(Category, db_table='category_publication')
-#
-#     def __str__(self) -> str:
-#         return self.name
+class Publication(Base):
+    __tablename__ = 'Publication'
+    id = Column(UUID, primary_key=True)
+    title = Column(VARCHAR)
+    createdAt = Column(TIMESTAMP(timezone=True), server_default=func.now(), nullable=False)
+    updatedAt = Column(TIMESTAMP(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    authors = relationship("Author", secondary=publication_authors, backref="authors")
+    categories = relationship("Category", secondary=publication_categories, backref="categories")
+
+
+Base.metadata.create_all(engine)
