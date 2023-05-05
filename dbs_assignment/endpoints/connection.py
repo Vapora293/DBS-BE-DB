@@ -60,7 +60,9 @@ def create_publication(payload: dict = Body(...)):
             title=new_publication.title,
             authors=[AuthorSchema(id=author.id, name=author.name, surname=author.surname) for author in
                      new_publication.authors],
-            categories=[CategorySchema(id=category.id, name=category.name) for category in new_publication.categories]
+            categories=[CategorySchema(id=category.id, name=category.name) for category in new_publication.categories],
+            createdAt=new_publication.createdAt,
+            updatedAt=new_publication.updatedAt
         )
     return response
 
@@ -78,12 +80,16 @@ def sql_execution(fetching, deleteFlag=False):
 
 
 def author_return(record):
+    try:
+        record[0]
+    except:
+        raise HTTPException(status_code=400)
     return {
         "id": record[0],
         "name": record[1],
         "surname": record[2],
-        "createdAt": record[3],
-        "updatedAt": record[4]
+        "createdAt*": record[3],
+        "updatedAt*": record[4]
     }
 
 
@@ -141,11 +147,15 @@ def delete_author(author_id: str):
 
 
 def category_return(record):
+    try:
+        record[0]
+    except:
+        raise HTTPException(status_code=400)
     return {
         "id": record[0],
         "name": record[1],
-        "createdAt": record[2],
-        "updatedAt": record[3]
+        "createdAt*": record[2],
+        "updatedAt*": record[3]
     }
 
 

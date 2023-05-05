@@ -2,6 +2,8 @@ from pydantic import BaseModel, Field
 from uuid import UUID, uuid4
 from typing import Optional, List
 
+from datetime import datetime
+
 
 class AuthorSchema(BaseModel):
     id: UUID = Field(default_factory=uuid4)
@@ -46,6 +48,8 @@ class PublicationOut(BaseModel):
     title: str
     authors: List[AuthorSchema]
     categories: List[CategorySchema]
+    createdAt: datetime
+    updatedAt: datetime
 
     class Config:
         orm_mode = True
