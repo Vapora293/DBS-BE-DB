@@ -33,7 +33,7 @@ def session_scope():
 router = APIRouter()
 
 
-@router.post("/publications", response_model=PublicationOut)
+@router.post("/publications", response_model=PublicationOut, status_code=201)
 def create_publication(payload: dict = Body(...)):
     try:
         publication = schemas.PublicationSchema(**payload)
