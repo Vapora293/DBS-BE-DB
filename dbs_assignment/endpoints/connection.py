@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from dbs_assignment import schemas
 from dbs_assignment.config import engine
 from dbs_assignment.models import Author, Category, Publication
-from dbs_assignment.schemas import PublicationOut, PublicationCreate, AuthorSchema, CategorySchema
+from dbs_assignment.schemas import PublicationOut, AuthorSchema, CategorySchema
 from typing import Any
 import uuid
 
@@ -88,8 +88,8 @@ def author_return(record):
         "id": record[0],
         "name": record[1],
         "surname": record[2],
-        "createdAt*": record[3],
-        "updatedAt*": record[4]
+        "created_at*": record[3],
+        "updated_at*": record[4]
     }
 
 
@@ -154,8 +154,8 @@ def category_return(record):
     return {
         "id": record[0],
         "name": record[1],
-        "createdAt*": record[2],
-        "updatedAt*": record[3]
+        "created_at*": record[2],
+        "updated_at*": record[3]
     }
 
 
