@@ -1,21 +1,16 @@
-import sqlalchemy.exc
-from fastapi import APIRouter, HTTPException
-from fastapi import Body
+from fastapi import Body, APIRouter, HTTPException
 
-from sqlalchemy import insert, select, update, delete
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import insert, select, update, delete
 
 from pydantic import ValidationError
-from sqlalchemy.orm import Session, joinedload
-from dbs_assignment import schemas
 
-from dbs_assignment.config import engine
+from dbs_assignment import schemas
+from dbs_assignment.models import Category
 from dbs_assignment.endpoints.connection import sql_execution
-from dbs_assignment.models import Author, Category, Publication
-from dbs_assignment.schemas import PublicationOut, AuthorSchema, CategorySchema
+
 from typing import Any
 import uuid
-from contextlib import contextmanager
 
 router = APIRouter()
 def category_return(record):

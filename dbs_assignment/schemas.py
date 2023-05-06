@@ -1,8 +1,7 @@
-from pydantic import BaseModel, Field
 from uuid import UUID, uuid4
+from datetime import datetime, date
 from typing import Optional, List
-
-from datetime import datetime
+from pydantic import BaseModel, Field, EmailStr
 
 
 class AuthorSchema(BaseModel):
@@ -19,6 +18,11 @@ class AuthorUpdateSchema(BaseModel):
     surname: Optional[str] = None
 
 
+class AuthorCreate(BaseModel):
+    name: str
+    surname: str
+
+
 class CategorySchema(BaseModel):
     id: UUID = Field(default_factory=uuid4)
     name: str
@@ -29,11 +33,6 @@ class CategorySchema(BaseModel):
 
 class CategoryUpdateSchema(BaseModel):
     name: Optional[str] = None
-
-
-class AuthorCreate(BaseModel):
-    name: str
-    surname: str
 
 
 class PublicationSchema(BaseModel):
@@ -48,6 +47,59 @@ class PublicationOut(BaseModel):
     title: str
     authors: List[dict]
     categories: List[str]
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        orm_mode = True
+
+
+class CardSchema(BaseModel):
+    id: UUID = Field(default_factory=uuid4)
+    user_id: UUID = Field(default_factory=uuid4)
+    magstripe: str
+    status: str
+
+
+class CardOut(BaseModel):
+    id: UUID = Field(default_factory=uuid4)
+    user_id: UUID = Field(default_factory=uuid4)
+    magstripe: str
+    status: str
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        orm_mode = True
+
+
+class CardUpdateSchema(BaseModel):
+    status: Optional[str]
+    user_id: Optional[str]
+
+
+class UserSchema(BaseModel):
+    id: UUID
+    name: str
+    surname: str
+    email: str
+    birth_date: date
+    personal_identificator: str
+
+class UserUpdateSchema(BaseModel):
+    name: Optional[str]
+    surname: Optional[str]
+    email: Optional[str]
+    birth_date: Optional[date]
+    personal_identificator: Optional[str]
+
+
+class UserOut(BaseModel):
+    id: UUID
+    name: str
+    surname: str
+    email: str
+    birth_date: date
     created_at: datetime
     updated_at: datetime
 

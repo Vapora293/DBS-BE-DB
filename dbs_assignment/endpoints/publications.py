@@ -1,7 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, HTTPException
-from fastapi import Body
+from fastapi import Body, APIRouter, HTTPException
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
@@ -10,9 +9,9 @@ from pydantic import ValidationError
 
 from dbs_assignment import schemas
 from dbs_assignment.config import engine
+from dbs_assignment.schemas import PublicationOut
 from dbs_assignment.endpoints.connection import session_scope
 from dbs_assignment.models import Author, Category, Publication
-from dbs_assignment.schemas import PublicationOut, AuthorSchema
 
 router = APIRouter()
 
@@ -38,6 +37,7 @@ def create_publication(payload: dict = Body(...)):
     except ValidationError:
         raise HTTPException(status_code=400)
     with Session(engine) as session:
+        # Get authors
         authors = [
             session.query(Author).filter_by(name=author_data.name, surname=author_data.surname).one_or_none()
             for author_data in publication.authors
@@ -66,7 +66,7 @@ def create_publication(payload: dict = Body(...)):
                 raise HTTPException(status_code=409)
             else:
                 raise HTTPException(status_code=400)
-        # Create the response object using the PublicationOut schema
+
         response = PublicationOut(
             id=new_publication.id,
             title=new_publication.title,
@@ -104,7 +104,7 @@ def update_publication(publication_id: str, payload: dict = Body(...)):
         publication = session.query(Publication).filter(Publication.id == publication_id).one_or_none()
         if not publication:
             raise HTTPException(status_code=404)
-
+        publication.title = payload_schema.title
         authors = [
             session.query(Author).filter_by(name=author_data.name, surname=author_data.surname).one_or_none()
             for author_data in payload_schema.authors
