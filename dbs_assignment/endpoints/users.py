@@ -25,6 +25,7 @@ def user_return(new_user):
         surname=new_user.surname,
         email=new_user.email,
         birth_date=new_user.birth_date,
+        personal_identificator=new_user.personal_identificator,
         created_at=new_user.created_at,
         updated_at=new_user.updated_at
     )

@@ -81,9 +81,17 @@ def update_card(card_id: str, payload: dict = Body(...)):
         for key, value in card_schema.dict().items():
             if value is not None:
                 setattr(card, key, value)
-        session.add(card)
-        session.commit()
-        session.refresh(card)
+        try:
+            session.add(card)
+            session.commit()
+            session.refresh(card)
+        except IntegrityError as e:
+            session.rollback()
+            if "duplicate key value violates unique constraint" in str(e):
+                raise HTTPException(status_code=409)
+            else:
+                raise HTTPException(status_code=400)
+
         return card_return(card)
 
 @router.delete("/cards/{card_id}", status_code=204)
