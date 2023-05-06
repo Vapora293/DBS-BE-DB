@@ -1,20 +1,18 @@
 from fastapi import Body, APIRouter, HTTPException
 
-from sqlalchemy.exc import IntegrityError, DataError
 from sqlalchemy import insert, select, update, delete
+from sqlalchemy.exc import IntegrityError
 
 from pydantic import ValidationError
 
 from dbs_assignment import schemas
 from dbs_assignment.models import Category
-from dbs_assignment.endpoints.connection import sql_execution, session_scope
+from dbs_assignment.endpoints.connection import sql_execution
 
 from typing import Any
 import uuid
 
 router = APIRouter()
-
-
 def category_return(record):
     try:
         record[0]
@@ -60,39 +58,16 @@ def get_category(category_id: str):
 
 
 @router.patch("/categories/{category_id}", status_code=200)
-def update_category(category_id: str, payload: dict = Body(...)):
-    if not payload:
-        fetching = select(Category).where(Category.id == category_id)
-        record = sql_execution(fetching)
-        if not record:
-            raise HTTPException(status_code=404)
-        return category_return(record)
-    try:
-        category_schema = schemas.CategoryUpdateSchema(**payload)
-    except ValidationError:
+def update_category(category_id: str, payload: schemas.CategoryUpdateSchema) -> Any:
+    update_data = payload.dict(exclude_unset=True)
+    if not update_data:
         raise HTTPException(status_code=400)
-    with session_scope() as session:
-        category = session.query(Category).filter(Category.id == category_id).one_or_none()
-        if not category:
-            raise HTTPException(status_code=404)
-        for key, value in category_schema.dict().items():
-            if value is not None:
-                setattr(category, key, value)
-    try:
-        session.add(category)
-        session.commit()
-        session.refresh(category)
-    except IntegrityError as e:
-        session.rollback()
-        if "duplicate key value violates unique constraint" in str(e):
-            raise HTTPException(status_code=409)
-        else:
-            raise HTTPException(status_code=400)
-    except DataError:
-        session.rollback()
-        raise HTTPException(status_code=400)
+    fetching = update(Category).where(Category.id == category_id).values(**update_data).returning(Category.id,
+                                                                                                  Category.name,
+                                                                                                  Category.created_at,
+                                                                                                  Category.updated_at)
 
-    return category_return(category)
+    return category_return(sql_execution(fetching))
 
 
 @router.delete("/categories/{category_id}", status_code=204)
