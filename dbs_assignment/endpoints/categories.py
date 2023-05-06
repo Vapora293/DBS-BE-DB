@@ -1,18 +1,20 @@
 from fastapi import Body, APIRouter, HTTPException
 
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, DataError
 from sqlalchemy import insert, select, update, delete
 
 from pydantic import ValidationError
 
 from dbs_assignment import schemas
 from dbs_assignment.models import Category
-from dbs_assignment.endpoints.connection import sql_execution
+from dbs_assignment.endpoints.connection import sql_execution, session_scope
 
 from typing import Any
 import uuid
 
 router = APIRouter()
+
+
 def category_return(record):
     try:
         record[0]
@@ -43,7 +45,6 @@ def create_category(payload: dict = Body(...)) -> Any:
         record = sql_execution(fetching)
     except IntegrityError:
         raise HTTPException(status_code=409)
-    
 
     return category_return(record)
 
@@ -59,16 +60,39 @@ def get_category(category_id: str):
 
 
 @router.patch("/categories/{category_id}", status_code=200)
-def update_category(category_id: str, payload: schemas.CategoryUpdateSchema) -> Any:
-    update_data = payload.dict(exclude_unset=True)
-    if not update_data:
+def update_category(category_id: str, payload: dict = Body(...)):
+    if not payload:
+        fetching = select(Category).where(Category.id == category_id)
+        record = sql_execution(fetching)
+        if not record:
+            raise HTTPException(status_code=404)
+        return category_return(record)
+    try:
+        category_schema = schemas.CategoryUpdateSchema(**payload)
+    except ValidationError:
         raise HTTPException(status_code=400)
-    fetching = update(Category).where(Category.id == category_id).values(**update_data).returning(Category.id,
-                                                                                                  Category.name,
-                                                                                                  Category.created_at,
-                                                                                                  Category.updated_at)
+    with session_scope() as session:
+        category = session.query(Category).filter(Category.id == category_id).one_or_none()
+        if not category:
+            raise HTTPException(status_code=404)
+        for key, value in category_schema.dict().items():
+            if value is not None:
+                setattr(category, key, value)
+    try:
+        session.add(category)
+        session.commit()
+        session.refresh(category)
+    except IntegrityError as e:
+        session.rollback()
+        if "duplicate key value violates unique constraint" in str(e):
+            raise HTTPException(status_code=409)
+        else:
+            raise HTTPException(status_code=400)
+    except DataError:
+        session.rollback()
+        raise HTTPException(status_code=400)
 
-    return category_return(sql_execution(fetching))
+    return category_return(category)
 
 
 @router.delete("/categories/{category_id}", status_code=204)
