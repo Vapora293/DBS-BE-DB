@@ -19,6 +19,7 @@ router = APIRouter()
 ##TODO tu mam lepsiu verziu patch requestu
 
 def user_return(new_user):
+    print(new_user.personal_identificator)
     return UserOut(
         id=new_user.id,
         name=new_user.name,
@@ -65,7 +66,6 @@ def get_user(user_id: str):
         )
         if not result:
             raise HTTPException(status_code=404)
-
     return user_return(result)
 
 

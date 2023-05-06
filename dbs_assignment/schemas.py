@@ -100,6 +100,7 @@ class UserOut(BaseModel):
     surname: str
     email: str
     birth_date: date
+    personal_identificator: str
     created_at: datetime
     updated_at: datetime
 
