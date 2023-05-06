@@ -1,5 +1,5 @@
-from sqlalchemy import Column, TIMESTAMP, func, UUID, String, DATETIME
-from enum import Enum
+from sqlalchemy import Column, TIMESTAMP, func, UUID, String, DATETIME, VARCHAR, Integer
+from sqlalchemy import Enum
 
 from dbs_assignment.config import engine, Base
 
@@ -53,15 +53,10 @@ class Publication(Base):
 class Card(Base):
     __tablename__ = 'Card'
 
-    class StatusEnum(Enum):
-        ACTIVE = 'active'
-        INACTIVE = 'inactive'
-        EXPIRED = 'expired'
-
     id = Column(UUID, primary_key=True)
     user_id = Column(UUID, ForeignKey('User.id'))
     magstripe = Column(String)
-    status = Column(String, default=StatusEnum.ACTIVE.value)
+    status = Column(Enum('active', 'inactive', 'expired', name='status_enum'))
     created_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
@@ -74,6 +69,19 @@ class User(Base):
     email = Column(String, unique=True)
     birth_date = Column(String)
     personal_identificator = Column(String)
+    created_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+
+class Instance(Base):
+    __tablename__ = 'instance'
+
+    id = Column(UUID, primary_key=True)
+    type = Column(Enum('physical', 'ebook', 'audiobook', name='type_enum'))
+    publisher = Column(String)
+    year = Column(Integer)
+    status = Column(Enum('available', 'reserved', name='statusInstance_enum'), default='available')
+    publication_id = Column(UUID, ForeignKey('Publication.id'))
     created_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 

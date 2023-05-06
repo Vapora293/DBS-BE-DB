@@ -86,6 +86,7 @@ class UserSchema(BaseModel):
     birth_date: date
     personal_identificator: str
 
+
 class UserUpdateSchema(BaseModel):
     name: Optional[str]
     surname: Optional[str]
@@ -101,6 +102,35 @@ class UserOut(BaseModel):
     email: str
     birth_date: date
     personal_identificator: str
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        orm_mode = True
+
+
+class InstanceSchema(BaseModel):
+    id: UUID
+    type: str
+    publisher: str
+    year: int
+    status: Optional[str]
+    publication_id: UUID
+
+class InstanceUpdateSchema(BaseModel):
+    type: Optional[str]
+    publisher: Optional[str]
+    year: Optional[int]
+    status: Optional[str]
+    publication_id: Optional[UUID]
+
+class InstanceOut(BaseModel):
+    id: UUID
+    type: str
+    publisher: str
+    year: int
+    status: str
+    publication_id: UUID
     created_at: datetime
     updated_at: datetime
 

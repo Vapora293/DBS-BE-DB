@@ -39,7 +39,6 @@ def create_card(payload: dict = Body(...)):
 
     new_card = Card(id=card_schema.id, user_id=card_schema.user_id, magstripe=card_schema.magstripe,
                     status=card_schema.status)
-
     with Session(engine) as session:
         try:
             session.add(new_card)
@@ -51,6 +50,9 @@ def create_card(payload: dict = Body(...)):
                 raise HTTPException(status_code=409)
             else:
                 raise HTTPException(status_code=400)
+        except LookupError:
+            session.rollback()
+            raise HTTPException(status_code=400)
 
         return card_return(new_card)
 
