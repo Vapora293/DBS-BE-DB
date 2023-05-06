@@ -35,6 +35,7 @@ class CategoryUpdateSchema(BaseModel):
     name: Optional[str] = None
 
 
+
 class PublicationSchema(BaseModel):
     id: UUID = Field(default_factory=uuid4)
     title: str
