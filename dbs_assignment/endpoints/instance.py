@@ -1,7 +1,7 @@
 from fastapi import Body, APIRouter, HTTPException
 
 from sqlalchemy.orm import Session
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, DataError
 
 from pydantic import ValidationError
 
@@ -95,6 +95,9 @@ def update_instance(instance_id: str, payload: dict = Body(...)):
                 raise HTTPException(status_code=409)
             else:
                 raise HTTPException(status_code=400)
+        except DataError:
+            session.rollback()
+            raise HTTPException(status_code=400)
 
         return instance_return(instance)
 
