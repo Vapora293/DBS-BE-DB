@@ -59,6 +59,7 @@ def get_category(category_id: str):
     return category_return(record)
 
 
+
 @router.patch("/categories/{category_id}", status_code=200)
 def update_category(category_id: str, payload: dict = Body(...)) -> Any:
     if 'name' in payload:
