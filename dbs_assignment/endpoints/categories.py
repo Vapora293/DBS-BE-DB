@@ -1,7 +1,7 @@
 from fastapi import Body, APIRouter, HTTPException
 
-from sqlalchemy import insert, select, update, delete
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import insert, select, update, delete
 
 from pydantic import ValidationError
 
@@ -11,8 +11,6 @@ from dbs_assignment.endpoints.connection import sql_execution
 
 from typing import Any
 import uuid
-
-from dbs_assignment.schemas import CategoryUpdateSchema
 
 router = APIRouter()
 def category_return(record):
@@ -59,13 +57,9 @@ def get_category(category_id: str):
     return category_return(record)
 
 
-
 @router.patch("/categories/{category_id}", status_code=200)
-def update_category(category_id: str, payload: dict = Body(...)) -> Any:
-    if 'name' in payload:
-        if payload['name'] is not None and not isinstance(payload['name'], str):
-            raise HTTPException(status_code=400)
-    update_data = CategoryUpdateSchema(**payload)
+def update_category(category_id: str, payload: schemas.CategoryUpdateSchema) -> Any:
+    update_data = payload.dict(exclude_unset=True)
     if not update_data:
         raise HTTPException(status_code=400)
     fetching = update(Category).where(Category.id == category_id).values(**update_data).returning(Category.id,
