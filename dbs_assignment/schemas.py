@@ -46,10 +46,10 @@ class PublicationSchema(BaseModel):
 class PublicationOut(BaseModel):
     id: UUID
     title: str
-    authors: List[AuthorSchema]
-    categories: List[CategorySchema]
-    createdAt: datetime
-    updatedAt: datetime
+    authors: List[dict]
+    categories: List[str]
+    created_at: datetime
+    updated_at: datetime
 
     class Config:
         orm_mode = True

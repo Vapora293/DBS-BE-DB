@@ -23,24 +23,24 @@ class Author(Base):
     id = Column(UUID, primary_key=True)
     name = Column(VARCHAR)
     surname = Column(VARCHAR)
-    createdAt = Column(TIMESTAMP(timezone=True), server_default=func.now(), nullable=False)
-    updatedAt = Column(TIMESTAMP(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    created_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
 
 class Category(Base):
     __tablename__ = 'Category'
     id = Column(UUID, primary_key=True)
     name = Column(VARCHAR)
-    createdAt = Column(TIMESTAMP(timezone=True), server_default=func.now(), nullable=False)
-    updatedAt = Column(TIMESTAMP(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    created_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
 
 class Publication(Base):
     __tablename__ = 'Publication'
     id = Column(UUID, primary_key=True)
     title = Column(VARCHAR)
-    createdAt = Column(TIMESTAMP(timezone=True), server_default=func.now(), nullable=False)
-    updatedAt = Column(TIMESTAMP(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    created_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     authors = relationship("Author", secondary=publication_authors, backref="authors")
     categories = relationship("Category", secondary=publication_categories, backref="categories")
 
