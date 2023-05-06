@@ -43,6 +43,7 @@ def create_category(payload: dict = Body(...)) -> Any:
         record = sql_execution(fetching)
     except IntegrityError:
         raise HTTPException(status_code=409)
+    
 
     return category_return(record)
 
