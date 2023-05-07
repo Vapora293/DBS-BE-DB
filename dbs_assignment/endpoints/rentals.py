@@ -83,7 +83,7 @@ def get_rental(rental_id: str):
 
 
 @router.patch("/rentals/{rental_id}", response_model=RentalOut)
-def update_publication(rental_id: str, payload: dict = Body(...)):
+def update_rental(rental_id: str, payload: dict = Body(...)):
     try:
         rental_schema = schemas.RentalUpdateSchema(**payload)
     except ValidationError:
