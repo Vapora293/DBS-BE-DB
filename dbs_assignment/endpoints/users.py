@@ -44,7 +44,7 @@ def user_return(new_user):
                 personal_identificator=new_user.personal_identificator,
                 created_at=new_user.created_at,
                 updated_at=new_user.updated_at,
-            )
+            ).dict(exclude_unset=True)
         return UserOut(
             id=new_user.id,
             name=new_user.name,

@@ -126,8 +126,8 @@ class UserOut(BaseModel):
     email: str
     birth_date: date
     personal_identificator: str
-    rentals: Optional[List[RentalOut]]
-    reservations: Optional[List[str]]
+    rentals: Optional[List[RentalOut]] = None
+    reservations: Optional[List[str]] = None
     created_at: datetime
     updated_at: datetime
 
