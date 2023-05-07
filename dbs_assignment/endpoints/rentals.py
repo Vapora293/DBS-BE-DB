@@ -13,7 +13,7 @@ from dbs_assignment import schemas
 from dbs_assignment.config import engine
 from dbs_assignment.schemas import PublicationOut, RentalOut
 from dbs_assignment.endpoints.connection import session_scope
-from dbs_assignment.models import Author, Category, Publication, Rental, Instance
+from dbs_assignment.models import Author, Category, Publication, Rental, Instance, Reservation
 
 router = APIRouter()
 
@@ -36,14 +36,21 @@ def create_rental(payload: dict = Body(...)):
         payload['id'] = str(uuid.uuid4())
     try:
         if payload['duration'] < 0 or payload['duration'] > 14:
+            print("one")
             raise HTTPException(status_code=400)
         rental = schemas.RentalSchema(**payload)
     except ValidationError:
+        print("two")
         raise HTTPException(status_code=400)
     with Session(engine) as session:
         free_instance = session.query(Instance).filter(Instance.publication_id == rental.publication_id).filter(
             Instance.status == 'available').first()
         if not free_instance:
+            print("three")
+            raise HTTPException(status_code=400)
+        reservations_for_instance = session.query(Reservation).filter(Reservation.publication_id == rental.publication_id).first()
+        if reservations_for_instance:
+            print("four")
             raise HTTPException(status_code=400)
         free_instance.status = 'reserved'
         session.commit()
