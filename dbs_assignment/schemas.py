@@ -79,22 +79,6 @@ class PublicationOut(BaseModel):
         orm_mode = True
 
 
-class ReservationSchema(BaseModel):
-    id: UUID
-    user_id: UUID
-    publication_id: UUID
-
-
-class ReservationOut(BaseModel):
-    id: UUID
-    user_id: UUID
-    publication_id: UUID
-    created_at: datetime
-
-    class Config:
-        orm_mode = True
-
-
 class CardSchema(BaseModel):
     id: UUID = Field(default_factory=uuid4)
     user_id: UUID = Field(default_factory=uuid4)
@@ -117,6 +101,22 @@ class CardOut(BaseModel):
 class CardUpdateSchema(BaseModel):
     status: Optional[str]
     user_id: Optional[str]
+
+
+class ReservationSchema(BaseModel):
+    id: UUID
+    user_id: UUID
+    publication_id: UUID
+
+
+class ReservationOut(BaseModel):
+    id: UUID
+    user_id: UUID
+    publication_id: UUID
+    created_at: datetime
+
+    class Config:
+        orm_mode = True
 
 
 class RentalSchema(BaseModel):
