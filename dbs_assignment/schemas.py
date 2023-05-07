@@ -1,3 +1,4 @@
+import re
 from uuid import UUID, uuid4
 from datetime import datetime, date
 from typing import Optional, List
@@ -24,25 +25,39 @@ class AuthorCreate(BaseModel):
 
 
 class CategorySchema(BaseModel):
-    id: UUID = Field(default_factory=uuid4)
+    id: UUID
     name: str
 
     @validator('name')
-    def validate_name(cls, name):
-        if name is not None and isinstance(int(name), int):
+    def validate_name(cls, value):
+        pattern = r'^(?=.*[a-zA-Z])[a-zA-Z0-9\s]*$'
+        if not re.match(pattern, value):
             raise ValueError()
-        return name
+        return value
+
+    class Config:
+        orm_mode = True
+
+
+class CategoryOut(BaseModel):
+    id: UUID
+    name: str
+    created_at: datetime
+    updated_at: datetime
+
     class Config:
         orm_mode = True
 
 
 class CategoryUpdateSchema(BaseModel):
     name: Optional[str] = None
+
     @validator('name', allow_reuse=True)
-    def validate_name(cls, name):
-        if name is not None and isinstance(int(name), int):
-            raise ValueError()
-        return name
+    def validate_name(cls, value):
+        pattern = r'^(?=.*[a-zA-Z])[a-zA-Z0-9\s]*$'
+        if not re.match(pattern, value):
+            raise ValueError('Name must contain at least one alphabetical character and not be a valid number')
+        return value
 
 
 class PublicationSchema(BaseModel):
@@ -63,10 +78,12 @@ class PublicationOut(BaseModel):
     class Config:
         orm_mode = True
 
+
 class ReservationSchema(BaseModel):
     id: UUID
     user_id: UUID
     publication_id: UUID
+
 
 class ReservationOut(BaseModel):
     id: UUID
