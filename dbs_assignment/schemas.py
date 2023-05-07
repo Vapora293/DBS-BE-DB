@@ -53,6 +53,19 @@ class PublicationOut(BaseModel):
     class Config:
         orm_mode = True
 
+class ReservationSchema(BaseModel):
+    id: UUID
+    user_id: UUID
+    publication_id: UUID
+class ReservationOut(BaseModel):
+    id: UUID
+    user_id: UUID
+    publication_id: UUID
+    created_at: datetime
+
+    class Config:
+        orm_mode = True
+
 
 class CardSchema(BaseModel):
     id: UUID = Field(default_factory=uuid4)

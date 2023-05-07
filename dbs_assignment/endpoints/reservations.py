@@ -1,6 +1,8 @@
+import datetime
 import uuid
 
 from fastapi import Body, APIRouter, HTTPException
+from sqlalchemy import func
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
@@ -9,57 +11,51 @@ from pydantic import ValidationError
 
 from dbs_assignment import schemas
 from dbs_assignment.config import engine
-from dbs_assignment.schemas import PublicationOut
+from dbs_assignment.schemas import PublicationOut, RentalOut
 from dbs_assignment.endpoints.connection import session_scope
-from dbs_assignment.models import Author, Category, Publication
+from dbs_assignment.models import Author, Category, Publication, Rental, Instance
 
 router = APIRouter()
 
 
-def publication_return(new_publication):
-    return PublicationOut(
-        id=new_publication.id,
-        title=new_publication.title,
-        authors=[{"name": author.name, "surname": author.surname} for author in
-                 new_publication.authors],
-        categories=[category.name for category in new_publication.categories],
-        created_at=new_publication.created_at,
-        updated_at=new_publication.updated_at
+def rental_return(new_rental):
+    return RentalOut(
+        id=new_rental.id,
+        user_id=new_rental.user_id,
+        publication_instance_id=new_rental.publication_instance_id,
+        duration=new_rental.duration,
+        start_date=new_rental.start_date,
+        end_date=new_rental.end_date,
+        status=new_rental.status
     )
 
 
-@router.post("/publications", response_model=PublicationOut, status_code=201)
-def create_publication(payload: dict = Body(...)):
+@router.post("/rentals", response_model=RentalOut, status_code=201)
+def create_rental(payload: dict = Body(...)):
     if 'id' not in payload:
         payload['id'] = str(uuid.uuid4())
     try:
-        publication = schemas.PublicationSchema(**payload)
+        if payload['duration'] < 0 or payload['duration'] > 14:
+            raise HTTPException(status_code=400)
+        rental = schemas.RentalSchema(**payload)
     except ValidationError:
         raise HTTPException(status_code=400)
     with Session(engine) as session:
-        # Get authors
-        authors = [
-            session.query(Author).filter_by(name=author_data.name, surname=author_data.surname).one_or_none()
-            for author_data in publication.authors
-        ]
-        if None in authors:
+        free_instance = session.query(Instance).filter(Instance.publication_id == rental.publication_id).filter(
+            Instance.status == 'available').first()
+        if not free_instance:
             raise HTTPException(status_code=400)
-
-        # Get categories
-        categories = [
-            session.query(Category).filter_by(name=category_name).one_or_none()
-            for category_name in publication.categories
-        ]
-        if None in categories:
-            raise HTTPException(status_code=400)
-
-        # Create publication
-        new_publication = Publication(id=publication.id, title=publication.title, authors=authors,
-                                      categories=categories)
+        free_instance.status = 'reserved'
+        session.commit()
+        session.refresh(free_instance)
+        new_rental = Rental(id=rental.id, user_id=rental.user_id, publication_instance_id=free_instance.id,
+                            duration=rental.duration,
+                            start_date=func.now(),
+                            end_date=datetime.datetime.now() + datetime.timedelta(days=rental.duration))
         try:
-            session.add(new_publication)
+            session.add(new_rental)
             session.commit()
-            session.refresh(new_publication)
+            session.refresh(new_rental)
         except IntegrityError as e:
             session.rollback()
             if "duplicate key value violates unique constraint" in str(e):
@@ -67,71 +63,36 @@ def create_publication(payload: dict = Body(...)):
             else:
                 raise HTTPException(status_code=400)
 
-        response = PublicationOut(
-            id=new_publication.id,
-            title=new_publication.title,
-            authors=[{"name": author.name, "surname": author.surname} for author in
-                     new_publication.authors],
-            categories=[category.name for category in new_publication.categories],
-            created_at=new_publication.created_at,
-            updated_at=new_publication.updated_at
-        )
-    return response
+    return rental_return(new_rental)
 
 
-@router.get("/publications/{publication_id}", response_model=PublicationOut)
-def get_publication(publication_id: str):
+@router.get("/rentals/{rental_id}", response_model=RentalOut)
+def get_rental(rental_id: str):
     with Session(engine) as session:
         result = (
-            session.query(Publication)
-            .options(joinedload(Publication.authors), joinedload(Publication.categories))
-            .filter(Publication.id == publication_id).one_or_none()
+            session.query(Rental).filter(Rental.id == rental_id).one_or_none()
         )
         if not result:
             raise HTTPException(status_code=404)
 
-    return publication_return(result)
+    return rental_return(result)
 
 
-@router.patch("/publications/{publication_id}", response_model=PublicationOut)
-def update_publication(publication_id: str, payload: dict = Body(...)):
-    payload['id'] = publication_id
+@router.patch("/rentals/{rental_id}", response_model=RentalOut)
+def update_publication(rental_id: str, payload: dict = Body(...)):
     try:
-        payload_schema = schemas.PublicationSchema(**payload)
+        rental_schema = schemas.RentalUpdateSchema(**payload)
     except ValidationError:
         raise HTTPException(status_code=400)
     with session_scope() as session:
-        publication = session.query(Publication).filter(Publication.id == publication_id).one_or_none()
-        if not publication:
+        rental = session.query(Rental).filter(Rental.id == rental_id).one_or_none()
+        if not rental:
             raise HTTPException(status_code=404)
-        publication.title = payload_schema.title
-        authors = [
-            session.query(Author).filter_by(name=author_data.name, surname=author_data.surname).one_or_none()
-            for author_data in payload_schema.authors
-        ]
-        if None in authors:
+        if rental.status != 'active':
             raise HTTPException(status_code=400)
-        publication.authors = authors
-
-        categories = [
-            session.query(Category).filter_by(name=category_name).one_or_none()
-            for category_name in payload_schema.categories
-        ]
-        if None in categories:
-            raise HTTPException(status_code=400)
-        publication.categories = categories
-        session.refresh(publication)
-
-        return publication_return(publication)
-
-
-@router.delete("/publications/{publication_id}", status_code=204)
-def delete_publication(publication_id: str):
-    with session_scope() as session:
-        publication = session.query(Publication).filter(Publication.id == publication_id).one_or_none()
-        if not publication:
-            raise HTTPException(status_code=404)
-
-        session.delete(publication)
+        rental.end_date += datetime.timedelta(days=rental_schema.duration)
+        rental.duration += rental_schema.duration
         session.commit()
-    return None
+        session.refresh(rental)
+
+        return rental_return(rental)
