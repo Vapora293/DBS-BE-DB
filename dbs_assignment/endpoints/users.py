@@ -25,8 +25,6 @@ def rental_to_rentalOut(rental: Rental) -> RentalOut:
         user_id=rental.user_id,
         publication_instance_id=rental.publication_instance_id,
         duration=rental.duration,
-        start_date=rental.start_date,
-        end_date=rental.end_date,
         status=rental.status
     )
 
@@ -35,8 +33,7 @@ def reservation_to_reservationOut(reservation: Reservation) -> ReservationOut:
     return ReservationOut(
         id=reservation.id,
         user_id=reservation.user_id,
-        publication_id=reservation.publication_id,
-        created_at=reservation.created_at
+        publication_id=reservation.publication_id
     )
 
 
@@ -48,7 +45,6 @@ def user_return(new_user):
         reservation_out_list = [reservation_to_reservationOut(reservation) for reservation in reservations]
         if len(rental_out_list) == 0:
             if len(reservation_out_list) == 0:
-                print("jedna")
                 return UserOut(
                     id=new_user.id,
                     name=new_user.name,
@@ -59,7 +55,6 @@ def user_return(new_user):
                     created_at=new_user.created_at,
                     updated_at=new_user.updated_at,
                 ).dict(exclude_unset=True)
-            print("dva")
             return UserOut(
                 id=new_user.id,
                 name=new_user.name,
@@ -72,7 +67,6 @@ def user_return(new_user):
                 updated_at=new_user.updated_at,
             ).dict(exclude_unset=True)
         if len(reservation_out_list) == 0:
-            print("tri")
             return UserOut(
                 id=new_user.id,
                 name=new_user.name,
@@ -84,7 +78,6 @@ def user_return(new_user):
                 created_at=new_user.created_at,
                 updated_at=new_user.updated_at,
             ).dict(exclude_unset=True)
-        print("styri")
         return UserOut(
             id=new_user.id,
             name=new_user.name,
@@ -157,4 +150,13 @@ def update_user(user_id: str, payload: dict = Body(...)):
         session.commit()  # Commit the changes to the database
         session.refresh(user)
 
-        return user_return(user)
+        return UserOut(
+            id=user.id,
+            name=user.name,
+            surname=user.surname,
+            email=user.email,
+            birth_date=user.birth_date,
+            personal_identificator=user.personal_identificator,
+            created_at=user.created_at,
+            updated_at=user.updated_at,
+        ).dict(exclude_unset=True)
