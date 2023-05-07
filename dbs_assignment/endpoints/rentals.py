@@ -45,12 +45,7 @@ def create_rental(payload: dict = Body(...)):
             Instance.status == 'available').first()
         if not free_instance:
             raise HTTPException(status_code=400)
-        reservations_for_instance = (
-            session.query(Reservation)
-            .filter(Reservation.publication_id == rental.publication_id)
-            .order_by(Reservation.created_at.asc())
-            .first()
-        )
+        reservations_for_instance = session.query(Reservation).filter(Reservation.publication_id == rental.publication_id)
         if reservations_for_instance:
             if reservations_for_instance.user_id != rental.user_id:
                 raise HTTPException(status_code=400)
