@@ -22,7 +22,7 @@ def rental_return(new_rental):
     return RentalOut(
         id=new_rental.id,
         user_id=new_rental.user_id,
-        publication_id=new_rental.publication_instance_id,
+        publication_instance_id=new_rental.publication_instance_id,
         duration=new_rental.duration,
         start_date=new_rental.start_date,
         end_date=new_rental.end_date,

@@ -16,7 +16,6 @@ from dbs_assignment.schemas import UserOut, RentalOut
 
 router = APIRouter()
 
-
 ##TODO tu mam lepsiu verziu patch requestu
 
 def rental_to_rental_out(rental: Rental) -> RentalOut:
@@ -33,6 +32,19 @@ def rental_to_rental_out(rental: Rental) -> RentalOut:
 
 def user_return(new_user):
     with Session(engine) as session:
+        rentals = session.query(Rental).filter(Rental.user_id == new_user.id)
+        rental_out_list = [rental_to_rental_out(rental) for rental in rentals]
+        if len(rental_out_list) == 0:
+            return UserOut(
+                id=new_user.id,
+                name=new_user.name,
+                surname=new_user.surname,
+                email=new_user.email,
+                birth_date=new_user.birth_date,
+                personal_identificator=new_user.personal_identificator,
+                created_at=new_user.created_at,
+                updated_at=new_user.updated_at,
+            )
         return UserOut(
             id=new_user.id,
             name=new_user.name,
@@ -40,8 +52,7 @@ def user_return(new_user):
             email=new_user.email,
             birth_date=new_user.birth_date,
             personal_identificator=new_user.personal_identificator,
-            rentals=[rental_to_rental_out(rental) for rental in
-                     (session.query(Rental).filter(Rental.user_id == new_user.id))],
+            rentals=rental_out_list,
             created_at=new_user.created_at,
             updated_at=new_user.updated_at,
         )
@@ -55,6 +66,7 @@ def create_user(payload: dict = Body(...)):
         user_schema = schemas.UserSchema(**payload)
     except ValidationError:
         raise HTTPException(status_code=400)
+
 
     with Session(engine) as session:
         new_user = User(id=user_schema.id, name=user_schema.name, surname=user_schema.surname, email=user_schema.email,
@@ -71,6 +83,7 @@ def create_user(payload: dict = Body(...)):
                 raise HTTPException(status_code=400)
 
         return user_return(new_user)
+
 
 
 @router.get("/users/{user_id}", status_code=200)
@@ -104,7 +117,9 @@ def update_user(user_id: str, payload: dict = Body(...)):
                 setattr(user, key, value)
 
         session.add(user)  # Mark the user object as dirty to update the record
-        session.commit()  # Commit the changes to the database
+        session.commit()   # Commit the changes to the database
         session.refresh(user)
 
         return user_return(user)
+
+

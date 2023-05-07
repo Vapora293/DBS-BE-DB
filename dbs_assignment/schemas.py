@@ -88,7 +88,7 @@ class RentalSchema(BaseModel):
 class RentalOut(BaseModel):
     id: UUID
     user_id: UUID
-    publication_id: UUID
+    publication_instance_id: UUID
     duration: int
     start_date: datetime
     end_date: datetime
