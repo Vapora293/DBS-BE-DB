@@ -8,17 +8,18 @@ from pydantic import ValidationError
 from dbs_assignment import schemas
 from dbs_assignment.config import engine
 from dbs_assignment.endpoints.connection import session_scope
-from dbs_assignment.models import User, Rental
+from dbs_assignment.models import User, Rental, Reservation
 
 import uuid
 
-from dbs_assignment.schemas import UserOut, RentalOut
+from dbs_assignment.schemas import UserOut, RentalOut, ReservationOut
 
 router = APIRouter()
 
+
 ##TODO tu mam lepsiu verziu patch requestu
 
-def rental_to_rental_out(rental: Rental) -> RentalOut:
+def rental_to_rentalOut(rental: Rental) -> RentalOut:
     return RentalOut(
         id=rental.id,
         user_id=rental.user_id,
@@ -30,11 +31,33 @@ def rental_to_rental_out(rental: Rental) -> RentalOut:
     )
 
 
+def reservation_to_reservationOut(reservation: Reservation) -> ReservationOut:
+    return ReservationOut(
+        id=reservation.id,
+        user_id=reservation.user_id,
+        publication_id=reservation.publication_id,
+        created_at=reservation.created_at
+    )
+
+
 def user_return(new_user):
     with Session(engine) as session:
         rentals = session.query(Rental).filter(Rental.user_id == new_user.id)
-        rental_out_list = [rental_to_rental_out(rental) for rental in rentals]
+        rental_out_list = [rental_to_rentalOut(rental) for rental in rentals]
+        reservations = session.query(Reservation).filter(Reservation.user_id == new_user.id)
+        reservation_out_list = [rental_to_rentalOut(reservation) for reservation in reservations]
         if len(rental_out_list) == 0:
+            if len(reservation_out_list) == 0:
+                return UserOut(
+                    id=new_user.id,
+                    name=new_user.name,
+                    surname=new_user.surname,
+                    email=new_user.email,
+                    birth_date=new_user.birth_date,
+                    personal_identificator=new_user.personal_identificator,
+                    created_at=new_user.created_at,
+                    updated_at=new_user.updated_at,
+                ).dict(exclude_unset=True)
             return UserOut(
                 id=new_user.id,
                 name=new_user.name,
@@ -42,6 +65,19 @@ def user_return(new_user):
                 email=new_user.email,
                 birth_date=new_user.birth_date,
                 personal_identificator=new_user.personal_identificator,
+                reservations=reservation_out_list,
+                created_at=new_user.created_at,
+                updated_at=new_user.updated_at,
+            ).dict(exclude_unset=True)
+        if len(reservation_out_list) == 0:
+            return UserOut(
+                id=new_user.id,
+                name=new_user.name,
+                surname=new_user.surname,
+                email=new_user.email,
+                birth_date=new_user.birth_date,
+                personal_identificator=new_user.personal_identificator,
+                rentals=rental_out_list,
                 created_at=new_user.created_at,
                 updated_at=new_user.updated_at,
             ).dict(exclude_unset=True)
@@ -52,6 +88,7 @@ def user_return(new_user):
             email=new_user.email,
             birth_date=new_user.birth_date,
             personal_identificator=new_user.personal_identificator,
+            reservations=reservation_out_list,
             rentals=rental_out_list,
             created_at=new_user.created_at,
             updated_at=new_user.updated_at,
@@ -66,7 +103,6 @@ def create_user(payload: dict = Body(...)):
         user_schema = schemas.UserSchema(**payload)
     except ValidationError:
         raise HTTPException(status_code=400)
-
 
     with Session(engine) as session:
         new_user = User(id=user_schema.id, name=user_schema.name, surname=user_schema.surname, email=user_schema.email,
@@ -85,15 +121,12 @@ def create_user(payload: dict = Body(...)):
         return user_return(new_user)
 
 
-
 @router.get("/users/{user_id}", status_code=200)
 def get_user(user_id: str):
     with Session(engine) as session:
         result = (
             session.query(User).filter(User.id == user_id).one_or_none()
         )
-        rentals = (session.query(Rental).filter(Rental.user_id == user_id))
-        rental_out_list = [rental_to_rental_out(rental) for rental in rentals]
         if not result:
             raise HTTPException(status_code=404)
     return user_return(result)
@@ -117,9 +150,7 @@ def update_user(user_id: str, payload: dict = Body(...)):
                 setattr(user, key, value)
 
         session.add(user)  # Mark the user object as dirty to update the record
-        session.commit()   # Commit the changes to the database
+        session.commit()  # Commit the changes to the database
         session.refresh(user)
 
         return user_return(user)
-
-
