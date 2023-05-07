@@ -57,8 +57,6 @@ def create_rental(payload: dict = Body(...)):
         free_instance.status = 'reserved'
         session.commit()
         session.refresh(free_instance)
-        if reservations_for_instance:
-            raise HTTPException(status_code=400)
         new_rental = Rental(id=rental.id, user_id=rental.user_id, publication_instance_id=free_instance.id,
                             duration=rental.duration,
                             start_date=func.now(),
