@@ -22,7 +22,7 @@ def rental_to_rental_out(rental: Rental) -> RentalOut:
     return RentalOut(
         id=rental.id,
         user_id=rental.user_id,
-        publication_id=rental.publication_instance_id,
+        publication_instance_id=rental.publication_instance_id,
         duration=rental.duration,
         start_date=rental.start_date,
         end_date=rental.end_date,
@@ -55,7 +55,7 @@ def user_return(new_user):
             rentals=rental_out_list,
             created_at=new_user.created_at,
             updated_at=new_user.updated_at,
-        )
+        ).dict(exclude_unset=True)
 
 
 @router.post("/users", status_code=201)
