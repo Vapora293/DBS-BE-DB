@@ -2,7 +2,6 @@ import datetime
 import uuid
 
 from fastapi import Body, APIRouter, HTTPException
-from sqlalchemy import func
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session

@@ -113,7 +113,7 @@ class ReservationOut(BaseModel):
     id: UUID
     user_id: UUID
     publication_id: UUID
-    created_at: datetime
+    created_at: Optional[datetime] = None
 
     class Config:
         orm_mode = True
