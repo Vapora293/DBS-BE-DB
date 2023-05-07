@@ -35,7 +35,6 @@ class CategoryUpdateSchema(BaseModel):
     name: Optional[str] = None
 
 
-
 class PublicationSchema(BaseModel):
     id: UUID = Field(default_factory=uuid4)
     title: str
@@ -79,6 +78,30 @@ class CardUpdateSchema(BaseModel):
     user_id: Optional[str]
 
 
+class RentalSchema(BaseModel):
+    id: UUID
+    user_id: UUID
+    publication_id: UUID
+    duration: int
+
+
+class RentalOut(BaseModel):
+    id: UUID
+    user_id: UUID
+    publication_id: UUID
+    duration: int
+    start_date: datetime
+    end_date: datetime
+    status: str
+
+    class Config:
+        orm_mode = True
+
+
+class RentalUpdateSchema(BaseModel):
+    duration: int
+
+
 class UserSchema(BaseModel):
     id: UUID
     name: str
@@ -103,11 +126,9 @@ class UserOut(BaseModel):
     email: str
     birth_date: date
     personal_identificator: str
+    rentals: List[RentalOut]
     created_at: datetime
     updated_at: datetime
-
-    class Config:
-        orm_mode = True
 
 
 class InstanceSchema(BaseModel):
@@ -118,12 +139,14 @@ class InstanceSchema(BaseModel):
     status: Optional[str]
     publication_id: UUID
 
+
 class InstanceUpdateSchema(BaseModel):
     type: Optional[str]
     publisher: Optional[str]
     year: Optional[int]
     status: Optional[str]
     publication_id: Optional[UUID]
+
 
 class InstanceOut(BaseModel):
     id: UUID

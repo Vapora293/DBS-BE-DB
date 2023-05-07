@@ -48,6 +48,7 @@ class Publication(Base):
 
     authors = relationship("Author", secondary=publication_authors, backref="authors")
     categories = relationship("Category", secondary=publication_categories, backref="categories")
+    reservations = relationship("Reservation", back_populates="publication")
 
 
 class Card(Base):
@@ -72,9 +73,11 @@ class User(Base):
     created_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
+    rentals = relationship("Rental", back_populates="user")
+    reservations = relationship("Reservation", back_populates="user")
 
 class Instance(Base):
-    __tablename__ = 'instance'
+    __tablename__ = 'Instance'
 
     id = Column(UUID, primary_key=True)
     type = Column(Enum('physical', 'ebook', 'audiobook', name='type_enum'))
@@ -84,6 +87,32 @@ class Instance(Base):
     publication_id = Column(UUID, ForeignKey('Publication.id'))
     created_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    rentals = relationship("Rental", back_populates="instance")
+
+class Rental(Base):
+    __tablename__ = 'Rental'
+
+    id = Column(UUID, primary_key=True)
+    user_id = Column(UUID, ForeignKey('User.id'))
+    publication_instance_id = Column(UUID, ForeignKey('Instance.id'))
+    duration = Column(Integer)
+    start_date = Column(TIMESTAMP(timezone=True), nullable=False)
+    end_date = Column(TIMESTAMP(timezone=True), nullable=False)
+    status = Column(Enum('active', 'overdue', 'returned', name='statusRental_enum'), default='active')
+
+    user = relationship("User", back_populates="rentals")
+    instance = relationship("Instance", back_populates="rentals")
+
+class Reservation(Base):
+    __tablename__ = 'Reservation'
+    id = Column(UUID, primary_key=True)
+    user_id = Column(UUID, ForeignKey('User.id'))
+    publication_id = Column(UUID, ForeignKey('Publication.id'))
+    created_at = Column(TIMESTAMP(timezone=True), server_default=func.now(), nullable=False)
+
+    user = relationship("User", back_populates="reservations")
+    publication = relationship("Publication", back_populates="reservations")
 
 
 Base.metadata.create_all(engine)
