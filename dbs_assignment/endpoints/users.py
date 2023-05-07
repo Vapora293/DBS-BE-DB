@@ -45,9 +45,10 @@ def user_return(new_user):
         rentals = session.query(Rental).filter(Rental.user_id == new_user.id)
         rental_out_list = [rental_to_rentalOut(rental) for rental in rentals]
         reservations = session.query(Reservation).filter(Reservation.user_id == new_user.id)
-        reservation_out_list = [rental_to_rentalOut(reservation) for reservation in reservations]
+        reservation_out_list = [reservation_to_reservationOut(reservation) for reservation in reservations]
         if len(rental_out_list) == 0:
             if len(reservation_out_list) == 0:
+                print("jedna")
                 return UserOut(
                     id=new_user.id,
                     name=new_user.name,
@@ -58,6 +59,7 @@ def user_return(new_user):
                     created_at=new_user.created_at,
                     updated_at=new_user.updated_at,
                 ).dict(exclude_unset=True)
+            print("dva")
             return UserOut(
                 id=new_user.id,
                 name=new_user.name,
@@ -70,6 +72,7 @@ def user_return(new_user):
                 updated_at=new_user.updated_at,
             ).dict(exclude_unset=True)
         if len(reservation_out_list) == 0:
+            print("tri")
             return UserOut(
                 id=new_user.id,
                 name=new_user.name,
@@ -81,6 +84,7 @@ def user_return(new_user):
                 created_at=new_user.created_at,
                 updated_at=new_user.updated_at,
             ).dict(exclude_unset=True)
+        print("styri")
         return UserOut(
             id=new_user.id,
             name=new_user.name,

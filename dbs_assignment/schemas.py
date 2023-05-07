@@ -57,6 +57,7 @@ class ReservationSchema(BaseModel):
     id: UUID
     user_id: UUID
     publication_id: UUID
+
 class ReservationOut(BaseModel):
     id: UUID
     user_id: UUID
@@ -140,7 +141,7 @@ class UserOut(BaseModel):
     birth_date: date
     personal_identificator: str
     rentals: Optional[List[RentalOut]] = None
-    reservations: Optional[List[str]] = None
+    reservations: Optional[List[ReservationOut]] = None
     created_at: datetime
     updated_at: datetime
 
