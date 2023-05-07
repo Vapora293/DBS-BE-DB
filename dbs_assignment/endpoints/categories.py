@@ -13,6 +13,8 @@ from typing import Any
 import uuid
 
 router = APIRouter()
+
+
 def category_return(record):
     try:
         record[0]
@@ -58,8 +60,11 @@ def get_category(category_id: str):
 
 
 @router.patch("/categories/{category_id}", status_code=200)
-def update_category(category_id: str, payload: schemas.CategoryUpdateSchema) -> Any:
-    update_data = payload.dict(exclude_unset=True)
+def update_category(category_id: str, payload: dict = Body(...)) -> Any:
+    try:
+        update_data = schemas.CategoryUpdateSchema(**payload)
+    except ValidationError:
+        raise HTTPException(status_code=400)
     if not update_data:
         raise HTTPException(status_code=400)
     fetching = update(Category).where(Category.id == category_id).values(**update_data).returning(Category.id,

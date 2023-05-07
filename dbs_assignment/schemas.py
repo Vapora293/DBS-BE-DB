@@ -1,7 +1,7 @@
 from uuid import UUID, uuid4
 from datetime import datetime, date
 from typing import Optional, List
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, Field, validator
 
 
 class AuthorSchema(BaseModel):
@@ -27,12 +27,22 @@ class CategorySchema(BaseModel):
     id: UUID = Field(default_factory=uuid4)
     name: str
 
+    @validator('name')
+    def validate_name(cls, name):
+        if name is not None and isinstance(int(name), int):
+            raise ValueError()
+        return name
     class Config:
         orm_mode = True
 
 
 class CategoryUpdateSchema(BaseModel):
     name: Optional[str] = None
+    @validator('name', allow_reuse=True)
+    def validate_name(cls, name):
+        if name is not None and isinstance(int(name), int):
+            raise ValueError()
+        return name
 
 
 class PublicationSchema(BaseModel):
