@@ -91,7 +91,7 @@ def update_category(category_id: str, payload: dict = Body(...)) -> Any:
 
 
 @router.delete("/categories/{category_id}", status_code=204)
-def delete_author(category_id: str):
+def delete_category(category_id: str):
     fetching = delete(Category).where(Category.id == category_id)
     result = sql_execution(fetching, True)
     if result == 0:

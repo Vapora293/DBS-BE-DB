@@ -75,7 +75,7 @@ def delete_author(author_id: str):
     fetching = delete(Author).where(Author.id == author_id)
     result = sql_execution(fetching, True)
     if result == 0:
-        raise HTTPException(status_code=400)
+        raise HTTPException(status_code=404)
     return None
 
 
